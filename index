@@ -33,25 +33,30 @@
             border-radius: 5px;
             text-align: left;
             position: relative;
+            cursor: grab;
         }
-        .job { 
+        .definition:hover {
+            background: #e5e5e5;
+        }
+        .job-container { 
             padding: 12px; 
             margin: 10px 0; 
             background: #e0e0e0; 
-            cursor: grab; 
             border: 1px solid #ccc;
             border-radius: 5px;
-            transition: all 0.2s;
         }
-        .job:hover {
-            background: #d0d0d0;
+        .job-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #2c3e50;
         }
         .drop-zone {
-            min-height: 50px;
+            min-height: 100px;
             margin-top: 10px;
             border: 2px dashed #ccc;
             border-radius: 5px;
             background: rgba(255, 255, 255, 0.5);
+            padding: 10px;
         }
         .drop-zone.highlight {
             background: rgba(200, 230, 255, 0.5);
@@ -111,13 +116,13 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/themes/base/jquery-ui.min.css">
 </head>
 <body>
-    <h2>Associe les métiers à leurs définitions</h2>
+    <h2>Associe les définitions aux métiers correspondants</h2>
     <div class="container">
-        <div id="jobs" class="column">
-            <h3>Métiers</h3>
-        </div>
         <div id="definitions" class="column">
             <h3>Définitions</h3>
+        </div>
+        <div id="jobs" class="column">
+            <h3>Métiers</h3>
         </div>
     </div>
     <button id="validate">Valider</button>
@@ -157,28 +162,30 @@
                 // Mélanger les métiers
                 let shuffledJobs = [...jobs].sort(() => Math.random() - 0.5);
                 
-                // Créer les métiers à gauche
+                // Créer les métiers à droite avec leurs zones de dépôt
                 shuffledJobs.forEach(job => {
                     $("#jobs").append(`
-                        <div class='job' data-job='${job.job}'>${job.name}</div>
+                        <div class='job-container'>
+                            <div class='job-title' data-job='${job.job}'>${job.name}</div>
+                            <div class='drop-zone' data-job='${job.job}'></div>
+                        </div>
                     `);
                 });
 
                 // Mélanger à nouveau pour l'ordre des définitions
                 shuffledJobs = [...jobs].sort(() => Math.random() - 0.5);
                 
-                // Créer les définitions à droite
+                // Créer les définitions à gauche
                 shuffledJobs.forEach(job => {
                     $("#definitions").append(`
                         <div class='definition' data-job='${job.job}'>
                             ${job.definition}
-                            <div class='drop-zone'></div>
                         </div>
                     `);
                 });
 
-                // Rendre les métiers draggables
-                $(".job").draggable({ 
+                // Rendre les définitions draggables
+                $(".definition").draggable({ 
                     revert: "invalid",
                     helper: "clone",
                     cursor: "move",
@@ -190,27 +197,28 @@
                     }
                 });
 
-                // Rendre les zones de définition droppables
+                // Rendre les zones sous les métiers droppables
                 $(".drop-zone").droppable({
-                    accept: ".job",
+                    accept: ".definition",
                     hoverClass: "highlight",
                     drop: function(event, ui) {
-                        // Si cette zone contient déjà un job, le remettre dans la colonne des jobs
+                        // Si cette zone contient déjà une définition, la remettre dans la colonne des définitions
                         if ($(this).children().length > 0) {
-                            let existingJob = $(this).children().first().detach();
-                            $("#jobs").append(existingJob);
-                            existingJob.css({position: "static"});
+                            let existingDef = $(this).children().first().detach();
+                            $("#definitions").append(existingDef);
+                            existingDef.css({position: "static"});
                         }
                         
-                        // Ajouter le nouveau job à cette zone
-                        let jobClone = $(ui.draggable).detach();
-                        $(this).append(jobClone);
-                        jobClone.css({
+                        // Ajouter la nouvelle définition à cette zone
+                        let defClone = $(ui.draggable).detach();
+                        $(this).append(defClone);
+                        defClone.css({
                             position: "relative",
                             left: "0",
                             top: "0",
                             width: "auto",
-                            margin: "0"
+                            margin: "0",
+                            cursor: "default"
                         });
                     }
                 });
@@ -219,19 +227,22 @@
             // Validation des réponses
             $("#validate").click(function() {
                 let correct = 0;
-                $(".definition").each(function() {
-                    let defJob = $(this).attr("data-job");
-                    let dropZone = $(this).find(".drop-zone");
-                    let assignedJob = dropZone.children().first().attr("data-job");
+                $(".drop-zone").each(function() {
+                    let jobId = $(this).attr("data-job");
+                    let droppedDef = $(this).children().first();
                     
                     // Réinitialiser les classes
-                    dropZone.removeClass("correct incorrect");
+                    $(this).removeClass("correct incorrect");
                     
-                    if (defJob === assignedJob) {
-                        correct++;
-                        dropZone.addClass("correct");
-                    } else if (assignedJob) {
-                        dropZone.addClass("incorrect");
+                    if (droppedDef.length > 0) {
+                        let defJob = droppedDef.attr("data-job");
+                        
+                        if (jobId === defJob) {
+                            correct++;
+                            $(this).addClass("correct");
+                        } else {
+                            $(this).addClass("incorrect");
+                        }
                     }
                 });
                 
