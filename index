@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jeu des Métiers</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            text-align: center; 
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container { 
+            display: flex; 
+            justify-content: space-between; 
+            margin-top: 20px; 
+        }
+        .column { 
+            width: 45%; 
+            min-height: 500px; 
+            padding: 15px; 
+            border: 2px solid #ccc; 
+            border-radius: 8px;
+            background: #f9f9f9; 
+        }
+        .definition { 
+            padding: 15px; 
+            margin: 10px 0; 
+            background: #f0f0f0; 
+            border: 1px solid #ddd; 
+            border-radius: 5px;
+            text-align: left;
+            position: relative;
+        }
+        .job { 
+            padding: 12px; 
+            margin: 10px 0; 
+            background: #e0e0e0; 
+            cursor: grab; 
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            transition: all 0.2s;
+        }
+        .job:hover {
+            background: #d0d0d0;
+        }
+        .drop-zone {
+            min-height: 50px;
+            margin-top: 10px;
+            border: 2px dashed #ccc;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.5);
+        }
+        .drop-zone.highlight {
+            background: rgba(200, 230, 255, 0.5);
+            border-color: #4a90e2;
+        }
+        .incorrect {
+            background: #ffdddd;
+            border-color: #ff6666;
+        }
+        .correct {
+            background: #ddffdd;
+            border-color: #66ff66;
+        }
+        #validate { 
+            margin-top: 20px; 
+            padding: 12px 25px; 
+            background: #4a90e2; 
+            color: white; 
+            border: none;
+            border-radius: 5px; 
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.2s;
+        }
+        #validate:hover {
+            background: #3a80d2;
+        }
+        #reset {
+            margin-top: 20px;
+            margin-left: 10px;
+            padding: 12px 25px;
+            background: #ff6666;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.2s;
+        }
+        #reset:hover {
+            background: #e65555;
+        }
+        #result {
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+        h3 {
+            color: #4a90e2;
+            border-bottom: 2px solid #4a90e2;
+            padding-bottom: 10px;
+        }
+    </style>
+    <!-- Chargement des bibliothèques jQuery et jQuery UI depuis un CDN fiable -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/themes/base/jquery-ui.min.css">
+</head>
+<body>
+    <h2>Associe les métiers à leurs définitions</h2>
+    <div class="container">
+        <div id="jobs" class="column">
+            <h3>Métiers</h3>
+        </div>
+        <div id="definitions" class="column">
+            <h3>Définitions</h3>
+        </div>
+    </div>
+    <button id="validate">Valider</button>
+    <button id="reset">Réinitialiser</button>
+    <p id="result"></p>
+    <script>
+        // Attendre que le document soit complètement chargé
+        $(document).ready(function() {
+            const jobs = [
+                { job: "CEO", name: "CEO (Directeur Général)", definition: "Il définit la stratégie globale de l'entreprise, prend les décisions majeures et supervise l'ensemble des opérations." },
+                { job: "CTO", name: "CTO (Directeur Technique)", definition: "Responsable de la stratégie technologique de l'entreprise, il gère les équipes de développement et veille à l'innovation technique." },
+                { job: "CPO", name: "CPO (Directeur Produit)", definition: "Il s'occupe du développement et de l'amélioration des produits de l'entreprise en fonction des besoins du marché et des utilisateurs." },
+                { job: "Assistant administratif", name: "Assistant administratif", definition: "Il gère les tâches administratives courantes comme la gestion des documents, la planification des réunions et le suivi des courriers." },
+                { job: "Responsable juridique", name: "Responsable juridique", definition: "Il veille à la conformité de l'entreprise avec la législation en vigueur et gère les litiges juridiques." },
+                { job: "Chargé des ressources humaines", name: "Chargé des ressources humaines", definition: "Il s'occupe du recrutement, de la gestion des employés et de leur développement professionnel." },
+                { job: "Responsable financier", name: "Responsable financier", definition: "Il gère les finances de l'entreprise, établit les budgets et analyse les performances financières." },
+                { job: "Data Analyste", name: "Data Analyste", definition: "Il collecte, analyse et interprète les données afin d'aider à la prise de décision stratégique." },
+                { job: "Responsable de projet", name: "Responsable de projet", definition: "Il coordonne et supervise la mise en œuvre des projets en respectant les délais et les budgets." },
+                { job: "Designer UX/UI", name: "Designer UX/UI", definition: "Il conçoit des interfaces utilisateur ergonomiques et attrayantes pour améliorer l'expérience utilisateur." },
+                { job: "Développeur IA", name: "Développeur IA", definition: "Il développe des solutions basées sur l'intelligence artificielle, comme des algorithmes de machine learning." },
+                { job: "Data Scientist", name: "Data Scientist", definition: "Il analyse des données complexes pour en extraire des informations utiles et construire des modèles prédictifs." },
+                { job: "Ingénieur logiciel", name: "Ingénieur logiciel", definition: "Il conçoit, développe et teste des logiciels en s'assurant de leur bon fonctionnement." },
+                { job: "Chargé de communication", name: "Chargé de communication", definition: "Il élabore des stratégies de communication interne et externe pour promouvoir l'image de l'entreprise." },
+                { job: "Community Manager", name: "Community Manager", definition: "Il anime et modère les réseaux sociaux pour engager la communauté et améliorer la visibilité de l'entreprise." },
+                { job: "Support client", name: "Support client", definition: "Il assiste les clients en répondant à leurs questions et en résolvant leurs problèmes techniques ou fonctionnels." }
+            ];
+
+            // Initialiser le jeu
+            initGame();
+
+            function initGame() {
+                // Vider les colonnes
+                $("#jobs").html('<h3>Métiers</h3>');
+                $("#definitions").html('<h3>Définitions</h3>');
+                $("#result").text("");
+
+                // Mélanger les métiers
+                let shuffledJobs = [...jobs].sort(() => Math.random() - 0.5);
+                
+                // Créer les métiers à gauche
+                shuffledJobs.forEach(job => {
+                    $("#jobs").append(`
+                        <div class='job' data-job='${job.job}'>${job.name}</div>
+                    `);
+                });
+
+                // Mélanger à nouveau pour l'ordre des définitions
+                shuffledJobs = [...jobs].sort(() => Math.random() - 0.5);
+                
+                // Créer les définitions à droite
+                shuffledJobs.forEach(job => {
+                    $("#definitions").append(`
+                        <div class='definition' data-job='${job.job}'>
+                            ${job.definition}
+                            <div class='drop-zone'></div>
+                        </div>
+                    `);
+                });
+
+                // Rendre les métiers draggables
+                $(".job").draggable({ 
+                    revert: "invalid",
+                    helper: "clone",
+                    cursor: "move",
+                    start: function() {
+                        $(this).css("opacity", "0.5");
+                    },
+                    stop: function() {
+                        $(this).css("opacity", "1");
+                    }
+                });
+
+                // Rendre les zones de définition droppables
+                $(".drop-zone").droppable({
+                    accept: ".job",
+                    hoverClass: "highlight",
+                    drop: function(event, ui) {
+                        // Si cette zone contient déjà un job, le remettre dans la colonne des jobs
+                        if ($(this).children().length > 0) {
+                            let existingJob = $(this).children().first().detach();
+                            $("#jobs").append(existingJob);
+                            existingJob.css({position: "static"});
+                        }
+                        
+                        // Ajouter le nouveau job à cette zone
+                        let jobClone = $(ui.draggable).detach();
+                        $(this).append(jobClone);
+                        jobClone.css({
+                            position: "relative",
+                            left: "0",
+                            top: "0",
+                            width: "auto",
+                            margin: "0"
+                        });
+                    }
+                });
+            }
+
+            // Validation des réponses
+            $("#validate").click(function() {
+                let correct = 0;
+                $(".definition").each(function() {
+                    let defJob = $(this).attr("data-job");
+                    let dropZone = $(this).find(".drop-zone");
+                    let assignedJob = dropZone.children().first().attr("data-job");
+                    
+                    // Réinitialiser les classes
+                    dropZone.removeClass("correct incorrect");
+                    
+                    if (defJob === assignedJob) {
+                        correct++;
+                        dropZone.addClass("correct");
+                    } else if (assignedJob) {
+                        dropZone.addClass("incorrect");
+                    }
+                });
+                
+                // Afficher le score
+                $("#result").html(`Score: <strong>${correct}/${jobs.length}</strong>`);
+                
+                if (correct === jobs.length) {
+                    $("#result").append("<br>🎉 Félicitations! Toutes les réponses sont correctes! 🎉");
+                }
+            });
+
+            // Réinitialiser le jeu
+            $("#reset").click(function() {
+                initGame();
+            });
+        });
+    </script>
+</body>
+</html>
